@@ -1,0 +1,205 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+import glob
+import logging
+import time
+from pathlib import Path
+
+import lightkube
+import pytest
+import yaml
+from charms_dependencies import ISTIO_PILOT, KUBEFLOW_PROFILES, KUBEFLOW_ROLES
+from lightkube import codecs
+from lightkube.generic_resource import create_global_resource
+from lightkube.resources.core_v1 import ServiceAccount
+from lightkube.resources.rbac_authorization_v1 import RoleBinding
+from pytest_operator.plugin import OpsTest
+from tenacity import (
+    RetryError,
+    Retrying,
+    before_sleep_log,
+    stop_after_attempt,
+    stop_after_delay,
+    wait_exponential,
+)
+
+basedir = Path("./").absolute()
+PROFILE_NAMESPACE = "profile-example"
+PROFILE_NAME = "profile-example"
+PROFILE_FILE_PATH = basedir / "tests/integration/profile.yaml"
+PROFILE_FILE = yaml.safe_load(PROFILE_FILE_PATH.read_text())
+APP_NAME = "kubeflow-trainer"
+
+ISTIO_PILOT_NAME = "istio-pilot"
+ISTIO_PILOT_CHANNEL = "latest/edge"
+ISTIO_PILOT_TRUST = True
+
+log = logging.getLogger(__name__)
+
+TRAINER_CRD_RESOURCE_FILE = "src/templates/trainer-crds_manifests.yaml.j2"
+
+
+def _build_crd_kinds():
+    crd_yaml = yaml.safe_load_all(Path(TRAINER_CRD_RESOURCE_FILE).read_text())
+    crd_kinds = []
+    for crd in crd_yaml:
+        crd_kinds.append(crd.get("spec").get("names").get("kind"))
+    return crd_kinds
+
+
+@pytest.mark.abort_on_fail
+async def test_build_and_deploy(ops_test: OpsTest):
+    """Build the charm and deploy."""
+    charm_under_test = await ops_test.build_charm(".")
+
+    await ops_test.model.deploy(charm_under_test, application_name=APP_NAME, trust=True)
+
+    # Deploy kubeflow-roles and kubeflow-profiles to create a Profile
+    await ops_test.model.deploy(
+        entity_url=KUBEFLOW_ROLES.charm,
+        channel=KUBEFLOW_ROLES.channel,
+        trust=KUBEFLOW_ROLES.trust,
+    )
+    await ops_test.model.deploy(
+        entity_url=KUBEFLOW_PROFILES.charm,
+        channel=KUBEFLOW_PROFILES.channel,
+        trust=KUBEFLOW_PROFILES.trust,
+    )
+
+    # The profile controller needs AuthorizationPolicies to create Profiles
+    # Let's just deploy istio-pilot to provide the k8s cluster with this CRD
+    await ops_test.model.deploy(
+        entity_url=ISTIO_PILOT.charm,
+        channel=ISTIO_PILOT.channel,
+        trust=ISTIO_PILOT.trust,
+    )
+
+    await ops_test.model.wait_for_idle(
+        status="active", raise_on_blocked=True, raise_on_error=True, timeout=60 * 10
+    )
+
+
+@pytest.mark.parametrize("example", glob.glob("examples/*.yaml"))
+@pytest.mark.abort_on_fail
+async def test_authorization_for_creating_trainjob_resources(
+    example, ops_test: OpsTest, lightkube_client, apply_profile
+):
+    """Assert a *Job can be created by a user in the user namespace."""
+    # Set up for creating an object of kind *Job
+    job_yaml = yaml.safe_load(Path(example).read_text())
+    training_job = job_yaml["kind"]
+    log.info(f"Checking `kubectl can-i create` for {training_job}")
+    _, stdout, _ = await ops_test.run(
+        "kubectl",
+        "auth",
+        "can-i",
+        "create",
+        f"{training_job}",
+        f"--as=system:serviceaccount:{PROFILE_NAMESPACE}:default-editor",
+        f"--namespace={PROFILE_NAMESPACE}",
+        check=True,
+        fail_msg="Failed to execute kubectl auth",
+    )
+    assert stdout.strip() == "yes"
+
+
+@pytest.mark.parametrize("crd_kind", _build_crd_kinds())
+@pytest.mark.abort_on_fail
+async def test_authorization_for_getting_crds(
+    crd_kind, ops_test: OpsTest, lightkube_client, apply_profile
+):
+    """Assert CRDs can be fetched by a user in the user namespace."""
+    log.info(f"Checking `kubectl can-i get` for {crd_kind}")
+    _, stdout, _ = await ops_test.run(
+        "kubectl",
+        "auth",
+        "can-i",
+        "get",
+        f"{crd_kind}",
+        f"--as=system:serviceaccount:{PROFILE_NAMESPACE}:default-editor",
+        f"--namespace={PROFILE_NAMESPACE}",
+        check=True,
+        fail_msg="Failed to execute kubectl auth",
+    )
+    assert stdout.strip() == "yes"
+
+
+def apply_manifests(lightkube_client: lightkube.Client, yaml_file_path: Path):
+    """Apply resources using manifest files and return the applied object.
+
+    Args:
+        lightkube_client (lightkube.Client): an instance of lightkube.Client to
+            use for applying resources.
+        yaml_file_path (Path): the path to the resource yaml file.
+
+    Returns:
+        A namespaced or global lightkube resource (obj).
+    """
+    read_yaml = yaml_file_path.read_text()
+    yaml_loaded = codecs.load_all_yaml(read_yaml)
+    for obj in yaml_loaded:
+        lightkube_client.apply(
+            obj=obj,
+            name=obj.metadata.name,
+        )
+    return obj
+
+
+@pytest.fixture(scope="module")
+def lightkube_client() -> lightkube.Client:
+    """Return a lightkube Client that can talk to the K8s API."""
+    client = lightkube.Client(field_manager="kfp-operators")
+    return client
+
+
+@pytest.fixture(scope="module")
+def apply_profile(lightkube_client):
+    """Apply a Profile simulating a user."""
+    # Create a Profile global resource
+    profile_resource = create_global_resource(
+        group="kubeflow.org", version="v1", kind="Profile", plural="profiles"
+    )
+
+    # Apply Profile first
+    apply_manifests(lightkube_client, PROFILE_FILE_PATH)
+    log.info(f"Profile from {PROFILE_FILE_PATH} applied.")
+
+    # Ensure the Profile is fully initialized
+    try:
+        for attempt in Retrying(
+            stop=(stop_after_attempt(10) | stop_after_delay(30)),
+            wait=wait_exponential(multiplier=1, min=5, max=10),
+            reraise=True,
+            before_sleep=before_sleep_log(log, logging.INFO),
+        ):
+            with attempt:
+                # Look for the Profile and some of the objects expected in an instantiated
+                # Profile (to avoid https://github.com/canonical/training-operator/issues/136)
+                for resource, name, namespace in (
+                    (profile_resource, PROFILE_NAME, None),
+                    (ServiceAccount, "default-editor", PROFILE_NAME),
+                    (RoleBinding, "default-editor", PROFILE_NAME),
+                ):
+                    log.info(f"Looking for {resource} of name {name}")
+                    lightkube_client.get(resource, name=name, namespace=namespace)
+                    log.info(f"Found {resource} of name {name}")
+    except RetryError:
+        log.info(f"Profile {PROFILE_NAME} not found or found to be incomplete.")
+
+    # Wait a few seconds more just in case the profile-controller is still creating the Profile
+    # to avoid https://github.com/canonical/training-operator/issues/136
+    sleeptime = 5
+    log.info(f"Waiting {sleeptime}s to ensure Profile is fully initialized")
+    time.sleep(sleeptime)
+
+    yield
+
+    # Remove namespace
+    read_yaml = PROFILE_FILE_PATH.read_text()
+    yaml_loaded = codecs.load_all_yaml(read_yaml)
+    for obj in yaml_loaded:
+        lightkube_client.delete(
+            res=type(obj),
+            name=obj.metadata.name,
+            namespace=obj.metadata.namespace,
+        )

@@ -1,0 +1,18 @@
+# Copyright 2021 Canonical Ltd.
+# See LICENSE file for licensing details.
+name: kubeflow-trainer
+summary: Tools for distributed or non-distributed training on Kubernetes
+description: |
+  Trainer provides Kubernetes custom resources that make it
+  easy to run distributed or non-distributed training jobs on Kubernetes.
+  This charm deploys the Operator configured for use with Kubeflow to
+  Kubernetes models in Juju.
+docs: https://discourse.charmhub.io/t/19033
+provides:
+  metrics-endpoint:
+    interface: prometheus_scrape
+  grafana-dashboard:
+    interface: grafana_dashboard
+requires:
+  dashboard-links:
+    interface: kubeflow_dashboard_links

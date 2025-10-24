@@ -1,0 +1,10 @@
+build/
+__pycache__
+.idea
+.tox
+.coverage
+coverage.xml
+*.charm
+venv/
+.terraform*
+*.tfstate*

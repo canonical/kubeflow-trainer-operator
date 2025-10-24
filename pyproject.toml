@@ -1,0 +1,101 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Testing tools configuration
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+log_cli_level = "INFO"
+
+# Formatting tools configuration
+[tool.black]
+line-length = 99
+target-version = ["py38"]
+
+[tool.isort]
+line_length = 99
+profile = "black"
+
+# Linting tools configuration
+[tool.flake8]
+max-line-length = 99
+max-doc-length = 99
+max-complexity = 10
+exclude = [".git", "__pycache__", ".tox", "build", "dist", "*.egg_info", "venv"]
+select = ["E", "W", "F", "C", "N", "R", "D", "H"]
+# Ignore W503, E501 because using black creates errors with this
+# Ignore D107 Missing docstring in __init__
+ignore = ["W503", "E501", "D107"]
+# D100, D101, D102, D103: Ignore missing docstrings in tests
+per-file-ignores = ["tests/*:D100,D101,D102,D103,D104"]
+docstring-convention = "google"
+# Check for properly formatted copyright header in each file
+copyright-check = "True"
+copyright-author = "Canonical Ltd."
+copyright-regexp = "Copyright\\s\\d{4}([-,]\\d{4})*\\s+%(author)s"
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.group.charm]
+optional = true
+
+[tool.poetry.group.charm.dependencies]
+charmed-kubeflow-chisme = "^0.4.6"
+cosl = "^0.0.50"
+jinja2 = "^3.1.4"
+lightkube = "^0.15.6"
+lightkube-models = "^1.31.1.8"
+ops = "^2.17.1"
+
+[tool.poetry.group.fmt]
+optional = true
+
+[tool.poetry.group.fmt.dependencies]
+black = "^24.8.0"
+isort = "^5.13.2"
+
+[tool.poetry.group.lint]
+optional = true
+
+[tool.poetry.group.lint.dependencies]
+black = "^24.8.0"
+codespell = "^2.3.0"
+flake8 = "^7.0.0"
+flake8-builtins = "^2.5.0"
+flake8-copyright = "^0.2.4"
+isort = "^5.13.2"
+pep8-naming = "^0.14.1"
+pyproject-flake8 = "^7.0.0"
+
+[tool.poetry.group.unit]
+optional = true
+
+[tool.poetry.group.unit.dependencies]
+charmed-kubeflow-chisme = ">=0.4.11"
+coverage = "^7.6.1"
+lightkube = "^0.15.6"
+ops = "^2.17.1"
+pytest = "^8.3.4"
+
+[tool.poetry.group.integration]
+optional = true
+
+[tool.poetry.group.integration.dependencies]
+charmed-kubeflow-chisme = ">=0.4.11"
+juju = "<4.0"
+lightkube = "^0.15.6"
+pytest = "^8.3.4"
+pytest-operator = "^0.38.0"
+pyyaml = "^6.0.2"
+requests = "^2.32.3"
+tenacity = "^9.0.0"
+
+[project]
+name = "training-operator"
+requires-python = ">=3.12,<4.0"
