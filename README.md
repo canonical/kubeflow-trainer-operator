@@ -1,4 +1,4 @@
-# Trainer
+# Kubeflow Trainer Operator
 
 ## Overview
 

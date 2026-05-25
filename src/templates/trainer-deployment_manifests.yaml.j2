@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ app_name }}
+  namespace: {{ namespace }}
+  labels:
+    app.kubernetes.io/name: {{ app_name }}-manager
+    app.kubernetes.io/component: manager
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ app_name }}-manager
+      app.kubernetes.io/component: manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ app_name }}-manager
+        app.kubernetes.io/component: manager
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: manager
+          image: {{ kubeflow_trainer_image }}
+          command:
+            - /manager
+          args:
+            - --config=/controller_manager_config.yaml
+            - --zap-log-level=2
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /controller_manager_config.yaml
+              name: {{ app_name }}-config
+              readOnly: true
+              subPath: controller_manager_config.yaml
+            - mountPath: /tmp/k8s-webhook-server/serving-certs
+              name: cert
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+      serviceAccountName: {{ app_name }}-controller-manager
+      volumes:
+        - configMap:
+            name: {{ app_name }}-config
+          name: {{ app_name }}-config
+        - name: cert
+          secret:
+            defaultMode: 420
+            secretName: {{ app_name }}-webhook-cert

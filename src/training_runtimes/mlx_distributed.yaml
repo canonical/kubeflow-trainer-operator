@@ -1,0 +1,64 @@
+apiVersion: trainer.kubeflow.org/v1alpha1
+kind: ClusterTrainingRuntime
+metadata:
+  labels:
+    trainer.kubeflow.org/framework: mlx
+  name: mlx-distributed
+spec:
+  mlPolicy:
+    mpi:
+      mpiImplementation: OpenMPI
+      numProcPerNode: 1
+      runLauncherAsNode: true
+      sshAuthMountPath: /home/mpiuser/.ssh
+    numNodes: 1
+  template:
+    spec:
+      network:
+        publishNotReadyAddresses: true
+      replicatedJobs:
+        - name: launcher
+          template:
+            metadata:
+              labels:
+                trainer.kubeflow.org/trainjob-ancestor-step: trainer
+            spec:
+              template:
+                metadata:
+                  labels:
+                    sidecar.istio.io/inject: 'false'
+                spec:
+                  containers:
+                    - name: node
+                      image: ghcr.io/kubeflow/trainer/mlx-runtime
+                      securityContext:
+                        runAsUser: 1000
+        - name: node
+          template:
+            spec:
+              template:
+                metadata:
+                  labels:
+                    sidecar.istio.io/inject: 'false'
+                    # Opt out of Istio ambient mesh to enable pod-to-pod communication for distributed training.
+                    istio.io/dataplane-mode: none
+                spec:
+                  containers:
+                    - name: node
+                      image: ghcr.io/kubeflow/trainer/mlx-runtime
+                      securityContext:
+                        runAsUser: 1000
+                      command:
+                        - /usr/sbin/sshd
+                      args:
+                        - -De
+                        - -f
+                        - /home/mpiuser/.sshd_config
+                      readinessProbe:
+                        tcpSocket:
+                          port: 2222
+                        initialDelaySeconds: 5
+      successPolicy:
+        operator: All
+        targetReplicatedJobs:
+        - launcher
