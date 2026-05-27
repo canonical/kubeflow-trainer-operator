@@ -71,8 +71,8 @@ class ObjectStillExistsError(Exception):
     pass
 
 
-class TrainingOperatorCharm(CharmBase):
-    """A Juju Charm for Training Operator"""
+class KubeflowTrainerOperatorCharm(CharmBase):
+    """A Juju Charm for Kubeflow Trainer Operator"""
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -351,4 +351,4 @@ def _extract_crds_names(manifest_files: list[str]):
 
 
 if __name__ == "__main__":
-    main(TrainingOperatorCharm)
+    main(KubeflowTrainerOperatorCharm)
