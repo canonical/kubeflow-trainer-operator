@@ -50,6 +50,7 @@ jobs:
     name: Integration
     runs-on: ["self-hosted-linux-amd64-noble-xlarge"]
     strategy:
+      fail-fast: false
       matrix:
         tox-environment:
           - integration
