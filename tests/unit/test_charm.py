@@ -10,7 +10,7 @@ from ops import ErrorStatus
 from ops.model import ActiveStatus, MaintenanceStatus, WaitingStatus
 from ops.testing import Harness
 
-from charm import TrainingOperatorCharm
+from charm import KubeflowTrainerOperatorCharm
 
 
 class _FakeResponse:
@@ -43,18 +43,18 @@ class _FakeApiError(ApiError):
 @pytest.fixture(scope="function")
 def harness() -> Harness:
     """Create and return Harness for testing."""
-    harness = Harness(TrainingOperatorCharm)
+    harness = Harness(KubeflowTrainerOperatorCharm)
 
     return harness
 
 
 class TestCharm:
-    """Test class for TrainingOperatorCharm."""
+    """Test class for KubeflowTrainerOperatorCharm."""
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     def test_not_leader(
         self,
         _: MagicMock,  # k8s_resource_handler
@@ -67,10 +67,10 @@ class TestCharm:
         harness.begin_with_initial_hooks()
         assert harness.charm.model.unit.status == WaitingStatus("Waiting for leadership")
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     def test_no_relation(
         self,
         _: MagicMock,  # k8s_resource_handler
@@ -85,10 +85,10 @@ class TestCharm:
         harness.begin_with_initial_hooks()
         assert harness.charm.model.unit.status == ActiveStatus("")
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     def test_apply_k8s_resources_success(
         self,
         k8s_resource_handler: MagicMock,
@@ -107,10 +107,10 @@ class TestCharm:
         k8s_resource_handler.apply.assert_called()
         assert isinstance(harness.charm.model.unit.status, MaintenanceStatus)
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_error_on_apierror_on_k8s_resource_handler(
         self,
@@ -129,10 +129,10 @@ class TestCharm:
             harness.charm.on.install.emit()
             assert harness.charm.unit.status == ErrorStatus()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_blocked_on_apierror_on_crd_resource_handler(
         self,
@@ -151,10 +151,10 @@ class TestCharm:
             harness.charm.on.install.emit()
             assert harness.charm.unit.status == ErrorStatus()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_blocked_on_apierror_on_trainjob_resource_handler(
         self,
@@ -175,10 +175,10 @@ class TestCharm:
             harness.charm.on.install.emit()
             assert harness.charm.unit.status == ErrorStatus()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_blocked_on_apierror_on_training_runtimes_resource_handler(
         self,
@@ -197,10 +197,10 @@ class TestCharm:
             harness.charm.on.install.emit()
             assert harness.charm.unit.status == ErrorStatus()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_waiting_on_charm_pod_not_ready_on_training_runtimes_resource_handler(
         self,
@@ -221,10 +221,10 @@ class TestCharm:
             "Charm Pod is not ready yet. Will apply TrainingRuntimes later."
         )
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.ApiError", _FakeApiError)
     def test_waiting_on_webhook_server_service_not_ready_on_training_runtimes_resource_handler(
         self,
@@ -245,13 +245,13 @@ class TestCharm:
             "Webhook Server Service endpoints not ready. Will apply ClusterServingRuntimes later."  # noqa E501
         )
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
-    @patch("charm.TrainingOperatorCharm.ensure_crd_is_deleted")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.ensure_crd_is_deleted")
     @patch("charm.delete_many")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_on_remove_success(
@@ -276,12 +276,12 @@ class TestCharm:
         delete_many.assert_called()
         policy_resource_manager_cls.return_value.delete.assert_called_once()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
     @patch("charm.delete_many")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_on_remove_failure(
@@ -301,11 +301,11 @@ class TestCharm:
         with pytest.raises(ApiError):
             harness.charm.on.remove.emit()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_reconcile_policy_resource_manager_with_mesh(
@@ -341,11 +341,11 @@ class TestCharm:
             raw_policies=harness.charm._allow_all_policies,
         )
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_reconcile_policy_resource_manager_without_mesh(
@@ -371,13 +371,13 @@ class TestCharm:
         # Verify reconcile was not called
         policy_resource_manager_cls.return_value.reconcile.assert_not_called()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
-    @patch("charm.TrainingOperatorCharm.ensure_crd_is_deleted")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.ensure_crd_is_deleted")
     @patch("charm.delete_many")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_on_remove_calls_remove_authorization_policies(
@@ -400,11 +400,11 @@ class TestCharm:
         # Verify _remove_authorization_policies was called (via delete())
         policy_resource_manager_cls.return_value.delete.assert_called_once()
 
-    @patch("charm.TrainingOperatorCharm.k8s_resource_handler")
-    @patch("charm.TrainingOperatorCharm.crd_resource_handler")
-    @patch("charm.TrainingOperatorCharm.trainjob_resource_handler")
-    @patch("charm.TrainingOperatorCharm.training_runtimes_resource_handler")
-    @patch("charm.TrainingOperatorCharm.policy_resource_manager_client")
+    @patch("charm.KubeflowTrainerOperatorCharm.k8s_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.crd_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.trainjob_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.training_runtimes_resource_handler")
+    @patch("charm.KubeflowTrainerOperatorCharm.policy_resource_manager_client")
     @patch("charm.PolicyResourceManager")
     @patch("charm.ServiceMeshConsumer")
     def test_service_mesh_relation_broken(

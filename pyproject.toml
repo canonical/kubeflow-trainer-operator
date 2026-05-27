@@ -102,5 +102,5 @@ requests = "^2.32.3"
 tenacity = "^9.0.0"
 
 [project]
-name = "training-operator"
+name = "kubeflow-trainer-operator"
 requires-python = ">=3.12,<4.0"
