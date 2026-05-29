@@ -199,7 +199,3 @@ jobs:
       - name: Get JobSet logs
         run: kubectl logs --tail 100 -ntesting -l app.kubernetes.io/name=kubeflow-trainer-jobset
         if: failure()
-
-      - name: Get LeaderWorkerSet logs
-        run: kubectl logs --tail 100 -ntesting -l app.kubernetes.io/name=kubeflow-trainer-lws
-        if: failure()
