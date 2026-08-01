@@ -1,6 +1,6 @@
 options:
   kubeflow-trainer-image:
-    default: docker.io/charmedkubeflow/kubeflow-trainer:2.1.0-5c8ae13-20260701053851
+    default: docker.io/charmedkubeflow/kubeflow-trainer:2.1.0-5c8ae13-20260801050830
     description: |
       Container image to be used by the Kubeflow Trainer workload.
     type: string
