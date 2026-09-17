@@ -10,7 +10,7 @@ options:
       Container image to be used by the JobSet workload.
     type: string
   lws-image:
-    default: docker.io/charmedkubeflow/leaderworkerset:0.7.0-5c8ae13-20260901041630
+    default: charmedkubeflow/lws:0.7.0-363849d-20260917083947
     description: |
       Container image to be used by the Leader Worker Set workload.
     type: string
