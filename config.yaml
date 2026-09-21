@@ -9,3 +9,11 @@ options:
     description: |
       Container image to be used by the JobSet workload.
     type: string
+<<<<<<< HEAD
+=======
+  lws-image:
+    default: charmedkubeflow/lws:0.7.0-363849d-20260917083947
+    description: |
+      Container image to be used by the Leader Worker Set workload.
+    type: string
+>>>>>>> 5a87afa (chore: Integrate latest lws rock (#52))
