@@ -22,3 +22,35 @@ refer to the [installation][4] guide.
 [2]: https://github.com/kubeflow/manifests/tree/master/applications/trainer
 [3]: https://github.com/canonical/bundle-kubeflow
 [4]: https://charmed-kubeflow.io/docs/install
+
+
+### GPU support
+
+To run `TrainJob`s with the `torch-distributed` runtime on NVIDIA GPUs, the cluster needs the
+`nvidia` `RuntimeClass` (for example, from the NVIDIA GPU Operator). The charm does not set it by
+default, so that the runtime also works on clusters without GPUs. Enable it by patching the
+`ClusterTrainingRuntime`:
+
+```bash
+kubectl patch clustertrainingruntime torch-distributed --type=json -p='[
+  {"op":"add","path":"/spec/template/spec/replicatedJobs/0/template/spec/template/spec/runtimeClassName","value":"nvidia"}
+]'
+```
+
+Then request GPUs when submitting the job with the Kubeflow SDK:
+
+```python
+job_name = client.train(
+    trainer=CustomTrainer(
+        func=train_fashion_mnist_gpu,
+        # Number of PyTorch nodes for distributed training.
+        num_nodes=1,
+        # Resources for each PyTorch node.
+        resources_per_node={
+            "cpu": 3,
+            "memory": "8Gi",
+            "nvidia.com/gpu": 1,
+        },
+    ),
+)
+```
