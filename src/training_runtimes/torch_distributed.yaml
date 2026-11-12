@@ -28,6 +28,6 @@ spec:
                 containers:
                 - image: pytorch/pytorch:2.7.1-cuda12.8-cudnn9-runtime
                   name: node
-                  # workingDir must be set because the rock defines no WORKDIR, so it would default to `/`.
+                  # Customization: workingDir must be set because the rock defines no WORKDIR, so it would default to `/`.
                   # It must exist in the rock and be writable by its non-root user (see the `non-root-user` part in the rock's rockcraft.yaml).
                   workingDir: /workspace
