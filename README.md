@@ -26,7 +26,7 @@ refer to the [installation][4] guide.
 
 ### GPU support
 
-To run `TrainJob`s with the `torch-distributed` runtime on NVIDIA GPUs, the cluster needs the
+To run `TrainJob` with the `torch-distributed` runtime on NVIDIA GPUs, the cluster needs the
 `nvidia` `RuntimeClass` (for example, from the NVIDIA GPU Operator). The charm does not set it by
 default, so that the runtime also works on clusters without GPUs. Enable it by patching the
 `ClusterTrainingRuntime`:
