@@ -17,44 +17,44 @@ spec:
       network:
         publishNotReadyAddresses: true
       replicatedJobs:
-        - name: launcher
-          template:
-            metadata:
-              labels:
-                trainer.kubeflow.org/trainjob-ancestor-step: trainer
-            spec:
-              template:
-                spec:
-                  containers:
-                    - name: node
-                      image: ghcr.io/kubeflow/trainer/deepspeed-runtime
-                      securityContext:
-                        runAsUser: 1000
-        - name: node
-          template:
-            spec:
-              template:
-                metadata:
-                  labels:
-                    sidecar.istio.io/inject: 'false'
+      - name: launcher
+        template:
+          metadata:
+            labels:
+              trainer.kubeflow.org/trainjob-ancestor-step: trainer
+          spec:
+            template:
+              spec:
+                containers:
+                - name: node
+                  image: docker.io/charmedkubeflow/deepspeed-runtime:2.1.0-cuda12.8.1-devel-6dc4ac7-20261126105607
+                  securityContext:
+                    runAsUser: 1000
+      - name: node
+        template:
+          spec:
+            template:
+              metadata:
+                labels:
+                  sidecar.istio.io/inject: 'false'
                     # Opt out of Istio ambient mesh to enable pod-to-pod communication for distributed training.
-                    istio.io/dataplane-mode: none
-                spec:
-                  containers:
-                    - name: node
-                      image: ghcr.io/kubeflow/trainer/deepspeed-runtime
-                      securityContext:
-                        runAsUser: 1000
-                      command:
-                        - /usr/sbin/sshd
-                      args:
-                        - -De
-                        - -f
-                        - /home/mpiuser/.sshd_config
-                      readinessProbe:
-                        tcpSocket:
-                          port: 2222
-                        initialDelaySeconds: 5
+                  istio.io/dataplane-mode: none
+              spec:
+                containers:
+                - name: node
+                  image: docker.io/charmedkubeflow/deepspeed-runtime:2.1.0-cuda12.8.1-devel-6dc4ac7-20261126105607
+                  securityContext:
+                    runAsUser: 1000
+                  command:
+                  - /usr/sbin/sshd
+                  args:
+                  - -De
+                  - -f
+                  - /home/mpiuser/.sshd_config
+                  readinessProbe:
+                    tcpSocket:
+                      port: 2222
+                    initialDelaySeconds: 5
       successPolicy:
         operator: All
         targetReplicatedJobs:
