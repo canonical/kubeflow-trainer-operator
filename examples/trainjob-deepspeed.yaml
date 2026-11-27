@@ -7,3 +7,5 @@ spec:
     name: deepspeed-distributed
   trainer:
     numNodes: 2
+    # Overrides only the launcher's command; the rock's default entrypoint never exits, so `test_create_training_jobs` fails.
+    command: ["mpirun", "--hostfile", "/etc/mpi/hostfile", "python", "-c", "import deepspeed; print(deepspeed.__version__)"]
