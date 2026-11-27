@@ -6,4 +6,6 @@ spec:
   runtimeRef:
     name: deepspeed-distributed
   trainer:
+    # Overrides only the launcher's command; the rock's default entrypoint never exits, so `test_create_training_jobs` fails.
     numNodes: 2
+    command: ["python", "-c", "import deepspeed; print(deepspeed.__version__)"]
